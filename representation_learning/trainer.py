@@ -18,12 +18,6 @@ def crecte_ckpt_callback(ckpt_config: DictConfig):
 def create_logger(config: DictConfig):
     logger = loggers.WandbLogger(project='representation_learning', save_dir=config.experiment.save_dir, config=config,
                                  log_model='all')
-    #import pdb; pdb.set_trace()
-    #cfg_path = os.path.join(logger.save_dir, 'train_config.yaml')
-    #with open(cfg_path, 'w') as fh:
-    #    fh.write(OmegaConf.to_yaml(config))
-    #wandb.save(cfg_path, base_path=logger.save_dir)  # this will force sync it
-    #wandb.save('*.ckpt')  # should keep it up to date
     return logger
 
 

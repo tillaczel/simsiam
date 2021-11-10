@@ -1,3 +1,5 @@
+import pdb
+
 from omegaconf import DictConfig
 import pytorch_lightning as pl
 import numpy as np
@@ -57,14 +59,15 @@ class EngineModule(pl.LightningModule):
         metrics = dict()
         for k, v in acc.items():
             metrics[f'valid/{k}'] = v
+        print(metrics)
         self.logger.experiment.log(metrics, step=self.current_epoch)  # For wandb
         self.log_dict(metrics, prog_bar=False, on_epoch=True, on_step=False, logger=False)  # For callbacks
 
     def configure_optimizers(self):
         optimizer = get_optimizer(self.config.training.optimizer, self.parameters())
-        scheduler_config = self.config.training.scheduler
-        if scheduler_config is not None:
-            scheduler = get_scheduler(scheduler_config, optimizer)
+        training_config = self.config.training
+        if training_config.scheduler is not None:
+            scheduler = get_scheduler(training_config, optimizer)
             return [optimizer], [scheduler]
         else:
             return optimizer

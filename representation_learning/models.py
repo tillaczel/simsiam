@@ -1,21 +1,35 @@
 import torchvision.models as models
-from torch.nn import Sequential, Linear, BatchNorm1d, ReLU
+from torch.nn import Sequential, Linear, Conv2d, BatchNorm1d, ReLU, MaxPool2d, Flatten, AdaptiveAvgPool2d
 
 
 def get_encoder(n_p_layers: int = 3, emb_dim: int = 2048, out_bn: bool = True):
-    encoder = models.resnet18(num_classes=emb_dim, zero_init_residual=True)
+    resnet = models.resnet18(num_classes=emb_dim, zero_init_residual=True)
 
-    hid_dim = encoder.fc.weight.shape[1]
+    hid_dim = resnet.fc.weight.shape[1]
     layers = list()
     for _ in range(n_p_layers - 1):
         layers.append(Linear(hid_dim, hid_dim, bias=False))
         layers.append(BatchNorm1d(hid_dim))
         layers.append(ReLU(inplace=True))
-    layers.append(encoder.fc)
+    layers.append(resnet.fc)
     if out_bn:
         layers[-1].bias.requires_grad = False
         layers.append(BatchNorm1d(emb_dim, affine=False))
-    encoder.fc = Sequential(*layers)
+    resnet.fc = Sequential(*layers)
+
+    encoder = []
+    for name, module in resnet.named_children():
+        if name == 'conv1':
+            module = Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
+        if isinstance(module, MaxPool2d):
+            continue
+        if isinstance(module, AdaptiveAvgPool2d):
+            encoder.append(module)
+            encoder.append(Flatten(1))
+            continue
+        encoder.append(module)
+
+    encoder = Sequential(*encoder)
     return encoder
 
 

@@ -2,6 +2,7 @@ import os
 from omegaconf import DictConfig
 import pytorch_lightning as pl
 from typing import Optional
+import torch
 from torch.utils.data import random_split, Dataset, DataLoader
 from torchvision import datasets
 
@@ -9,7 +10,7 @@ from representation_learning.data.tranforms import get_transforms
 
 
 class DataHandler(pl.LightningDataModule):
-    def __init__(self, dataset, data_cfg: DictConfig):
+    def __init__(self, dataset, data_cfg: DictConfig, data_dir: str):
         super().__init__()
         self.dataset = dataset
         self.batch_size = data_cfg.batch_size
@@ -17,15 +18,15 @@ class DataHandler(pl.LightningDataModule):
         self.crop_size = data_cfg.crop_size
         self.num_workers = data_cfg.num_workers
 
-        self.dir = os.path.join('experiments', 'data')
+        self.data_dir = data_dir
 
         self.train_transform, self.test_transform = get_transforms(self.crop_size)
         self.train_set, self.valid_set, self.test_set = self._init_datasets()
 
     def _init_datasets(self):
-        test_set = self.dataset(self.dir, train=False, download=True)
+        test_set = self.dataset(self.data_dir, train=False, download=True)
 
-        datast_full = self.dataset(self.dir, train=True, download=True)
+        datast_full = self.dataset(self.data_dir, train=True, download=True)
         train_len = int(len(datast_full) * self.train_split_ratio)
         valid_len = len(datast_full)-train_len
         train_set, valid_set = random_split(datast_full, [train_len, valid_len])
@@ -36,13 +37,13 @@ class DataHandler(pl.LightningDataModule):
         return train_set, valid_set, test_set
 
     def train_dataloader(self):
-        return DataLoader(self.train_set, batch_size=self.batch_size, num_workers=self.num_workers)
+        return DataLoader(self.train_set, batch_size=self.batch_size, num_workers=self.num_workers, drop_last=True)
 
     def val_dataloader(self):
-        return DataLoader(self.valid_set, batch_size=self.batch_size, num_workers=self.num_workers)
+        return DataLoader(self.valid_set, batch_size=self.batch_size, num_workers=self.num_workers, drop_last=False)
 
     def test_dataloader(self):
-        return DataLoader(self.test_set, batch_size=self.batch_size, num_workers=self.num_workers)
+        return DataLoader(self.test_set, batch_size=self.batch_size, num_workers=self.num_workers, drop_last=False)
 
 
 class DoubleAugmentDataset(Dataset):
@@ -70,7 +71,7 @@ class AugmentDataset(Dataset):
     def __getitem__(self, index):
         x, y = self.dataset[index]
         x = self.transform(x)
-        return x, y
+        return x, torch.Tensor([y])
 
 
 DATASETS = {
@@ -78,8 +79,8 @@ DATASETS = {
 }
 
 
-def data_handler_factory(data_cfg: DictConfig):
+def data_handler_factory(data_cfg: DictConfig, data_dir: str):
     name = data_cfg.name
     if name in set(DATASETS.keys()):
-        return DataHandler(DATASETS[name], data_cfg)
+        return DataHandler(DATASETS[name], data_cfg, data_dir)
     raise ValueError(f'Dataset {name} not in available datasets: {DATASETS.keys()}')
