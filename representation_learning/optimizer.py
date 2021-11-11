@@ -2,6 +2,12 @@ import torch
 from omegaconf import DictConfig
 
 
+def get_optimizers(optim_config: DictConfig, encoder, predictor):
+    enc_opt = get_optimizer(optim_config.encoder, encoder.parameters())
+    pred_opt = get_optimizer(optim_config.predictor, predictor.parameters())
+    return [enc_opt, pred_opt]
+
+
 def get_optimizer(optim_config: DictConfig, params):
     name = optim_config.name
     lr = optim_config.lr
@@ -14,19 +20,18 @@ def get_optimizer(optim_config: DictConfig, params):
         raise ValueError(f'{name} not in optimizers')
 
 
-def get_scheduler(training_config, optimizer):
-    scheduler_config = training_config.scheduler
-    name = scheduler_config.name
+def get_schedulers(training_config, optimizers):
+    result = list()
+    if training_config.scheduler.encoder is not None:
+        result.append(get_scheduler(training_config, training_config.scheduler.encoder, optimizers[0]))
+    if training_config.scheduler.predictor is not None:
+        result.append(get_scheduler(training_config, training_config.scheduler.predictor, optimizers[1]))
+    return result
 
-    if name == 'plateau':
-        monitor = scheduler_config.monitor
-        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer,
-                                                               mode=scheduler_config.mode,
-                                                               patience=scheduler_config.patience,
-                                                               factor=scheduler_config.factor,
-                                                               min_lr=scheduler_config.min_lr)
-        return dict(scheduler=scheduler, monitor=monitor)
-    elif name == 'cosine':
+
+def get_scheduler(training_config, scheduler_config, optimizer):
+    name = scheduler_config.name
+    if name == 'cosine':
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer,
                                                                T_max=training_config.max_epochs)
         return dict(scheduler=scheduler)

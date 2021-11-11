@@ -6,7 +6,7 @@ import numpy as np
 import torch
 
 from representation_learning.models import get_encoder, get_predictor
-from representation_learning.optimizer import get_optimizer, get_scheduler
+from representation_learning.optimizer import get_optimizers, get_schedulers
 from representation_learning.loss import symmetric_cos_dist
 from representation_learning.metrics import knn_acc
 
@@ -21,29 +21,43 @@ class EngineModule(pl.LightningModule):
         self.predictor = get_predictor(n_layers=pred_conf.n_layers, emb_dim=proj_conf.emb_dim,
                                        hid_dim=pred_conf.hid_dim, out_bn=pred_conf.out_bn)
         self.loss_func = symmetric_cos_dist
+        self.automatic_optimization = False
+        self.epoch_losses = list()
 
     @property
     def lr(self):
-        return self.optimizers().param_groups[0]['lr']
+        result = {
+            'encoder_lr': self.optimizers()[0].param_groups[0]['lr'],
+            'predictor_lr': self.optimizers()[1].param_groups[0]['lr']
+        }
+        return result
 
     def forward(self, x):
         x = self.encoder(x)
         return x
 
     def training_step(self, batch, batch_idx):
+        opt_enc, opt_pred = self.optimizers()
+        opt_enc.zero_grad(), opt_pred.zero_grad()
         x1, x2 = batch
         z1, z2 = self.encoder(x1), self.encoder(x2)
         p1, p2 = self.predictor(z1), self.predictor(z2)
         loss = self.loss_func(z1.detach(), z2.detach(), p1, p2)
-        self.log('lr', self.lr, prog_bar=True, on_step=True, logger=False)  # For callbacks
-        return {'loss': loss}
+
+        loss.backward()
+        opt_enc.step(), opt_pred.step()
+
+        self.log_dict(self.lr, prog_bar=True, on_step=True, logger=False)  # For progress bar
+        self.epoch_losses.append(loss.detach().cpu().numpy())
 
     def training_epoch_end(self, outputs: list):
-        loss = np.mean(list(map(lambda x: x['loss'].detach().cpu().numpy(), outputs)))
-        metrics = {
-            'train/lr': self.lr,
-            'train/loss': loss
-        }
+        scheduler = self.lr_schedulers()
+        scheduler.step()
+
+        loss = np.mean(self.epoch_losses)
+        self.epoch_losses = list()
+        metrics = {'train/loss': loss}
+        metrics.update({f'train/{k}': v for k, v in self.lr.items()})
         self.logger.experiment.log(metrics, step=self.current_epoch)  # For wandb
         self.log_dict(metrics, prog_bar=False, on_epoch=True, on_step=False, logger=False)  # For callbacks
 
@@ -59,17 +73,17 @@ class EngineModule(pl.LightningModule):
         metrics = dict()
         for k, v in acc.items():
             metrics[f'valid/{k}'] = v
-        print(metrics)
         self.logger.experiment.log(metrics, step=self.current_epoch)  # For wandb
         self.log_dict(metrics, prog_bar=False, on_epoch=True, on_step=False, logger=False)  # For callbacks
 
     def configure_optimizers(self):
-        optimizer = get_optimizer(self.config.training.optimizer, self.parameters())
+        optimizers = get_optimizers(self.config.training.optimizer, self.encoder, self.predictor)
         training_config = self.config.training
-        if training_config.scheduler is not None:
-            scheduler = get_scheduler(training_config, optimizer)
-            return [optimizer], [scheduler]
+        if training_config.scheduler is not None and \
+                not (training_config.scheduler.encoder is None and training_config.scheduler.predictor is None):
+            schedulers = get_schedulers(training_config, optimizers)
+            return optimizers, schedulers
         else:
-            return optimizer
+            return optimizers
 
 

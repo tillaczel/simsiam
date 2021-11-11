@@ -23,12 +23,20 @@ model:
 training:
   max_epochs: 800
   optimizer:
-    name: 'sgd'
-    lr: 0.03
-    momentum: 0.9
-    weight_decay: 0.0005
+    encoder:
+      name: 'sgd'
+      lr: 0.03
+      momentum: 0.9
+      weight_decay: 0.0005
+    predictor:
+      name: 'sgd'
+      lr: 0.03
+      momentum: 0.9
+      weight_decay: 0.0005
   scheduler:
-    name: 'cosine'
+    encoder:
+      name: 'cosine'
+    predictor:
   ckpt_callback:
     save_top_k: 1
     monitor: 'valid/top_1_knn_acc'
