@@ -3,9 +3,7 @@ from PIL import ImageFilter
 import random
 
 
-def get_train_transform(normalize, crop_size):
-    # Copied from https://github.com/facebookresearch/simsiam/blob/main/main_simsiam.py
-    # TODO: augmentations
+def get_train_transform(normalize):
     transform = transforms.Compose([
         transforms.RandomResizedCrop(32),
         transforms.RandomHorizontalFlip(p=0.5),
@@ -25,11 +23,11 @@ def get_test_transform(normalize):
     return transform
 
 
-def get_transforms(crop_size: int):
+def get_transforms():
     # TODO: normalization
     normalize = transforms.Normalize(mean=[0.4914, 0.4822, 0.4465],
                                      std=[0.2023, 0.1994, 0.2010])
-    train_transform = get_train_transform(normalize, crop_size)
+    train_transform = get_train_transform(normalize)
     test_transform = get_test_transform(normalize)
     return train_transform, test_transform
 

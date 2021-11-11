@@ -8,7 +8,7 @@ import torch
 from representation_learning.models import get_encoder, get_predictor
 from representation_learning.optimizer import get_optimizers, get_schedulers
 from representation_learning.loss import symmetric_cos_dist
-from representation_learning.metrics import knn_acc
+from representation_learning.metrics import Metrics
 
 
 class EngineModule(pl.LightningModule):
@@ -22,6 +22,7 @@ class EngineModule(pl.LightningModule):
                                        hid_dim=pred_conf.hid_dim, out_bn=pred_conf.out_bn)
         self.loss_func = symmetric_cos_dist
         self.automatic_optimization = False
+        self.metrics = Metrics((1, 3, 5), emb_dim=config.model.projector.emb_dim)
         self.epoch_losses = list()
 
     @property
@@ -69,9 +70,9 @@ class EngineModule(pl.LightningModule):
     def validation_epoch_end(self, outputs: list):
         z, y = map(torch.cat, zip(*outputs))
         z, y = z.numpy(), y.numpy()
-        acc = knn_acc(z, y, (1, 3, 5))
+        _metrics = self.metrics.run(z, y)
         metrics = dict()
-        for k, v in acc.items():
+        for k, v in _metrics.items():
             metrics[f'valid/{k}'] = v
         self.logger.experiment.log(metrics, step=self.current_epoch)  # For wandb
         self.log_dict(metrics, prog_bar=False, on_epoch=True, on_step=False, logger=False)  # For callbacks

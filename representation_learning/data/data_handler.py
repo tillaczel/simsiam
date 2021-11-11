@@ -15,12 +15,11 @@ class DataHandler(pl.LightningDataModule):
         self.dataset = dataset
         self.batch_size = data_cfg.batch_size
         self.train_split_ratio = data_cfg.train_split_ratio
-        self.crop_size = data_cfg.crop_size
         self.num_workers = data_cfg.num_workers
 
         self.data_dir = data_dir
 
-        self.train_transform, self.test_transform = get_transforms(self.crop_size)
+        self.train_transform, self.test_transform = get_transforms()
         self.train_set, self.valid_set, self.test_set = self._init_datasets()
 
     def _init_datasets(self):
