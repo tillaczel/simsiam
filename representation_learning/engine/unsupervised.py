@@ -1,4 +1,4 @@
-import pdb
+from tqdm import tqdm
 
 from omegaconf import DictConfig
 import pytorch_lightning as pl
@@ -24,6 +24,8 @@ class EngineModule(pl.LightningModule):
         self.automatic_optimization = False
         self.metrics = Metrics((1, 3, 5), emb_dim=config.model.projector.emb_dim)
         self.epoch_losses = list()
+        self.full_eval_every_n = self.config.training.full_eval_every_n
+        self.feature_bank_z, self.feature_bank_y = list(), list()
 
     @property
     def lr(self):
@@ -40,7 +42,7 @@ class EngineModule(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         opt_enc, opt_pred = self.optimizers()
         opt_enc.zero_grad(), opt_pred.zero_grad()
-        x1, x2 = batch
+        x, y, x1, x2 = batch
         z1, z2 = self.encoder(x1), self.encoder(x2)
         p1, p2 = self.predictor(z1), self.predictor(z2)
         loss = self.loss_func(z1.detach(), z2.detach(), p1, p2)
@@ -50,6 +52,9 @@ class EngineModule(pl.LightningModule):
 
         self.log_dict(self.lr, prog_bar=True, on_step=True, logger=False)  # For progress bar
         self.epoch_losses.append(loss.detach().cpu().numpy())
+        if self.current_epoch % self.full_eval_every_n == 0:
+            z = self.encoder(x)
+            self.feature_bank_z.append(z.detach().cpu()), self.feature_bank_y.append(y.detach().cpu())
 
     def training_epoch_end(self, outputs: list):
         scheduler = self.lr_schedulers()
@@ -60,7 +65,7 @@ class EngineModule(pl.LightningModule):
         metrics = {'train/loss': loss}
         metrics.update({f'train/{k}': v for k, v in self.lr.items()})
         self.logger.experiment.log(metrics, step=self.current_epoch)  # For wandb
-        self.log_dict(metrics, prog_bar=False, on_epoch=True, on_step=False, logger=False)  # For callbacks
+        self.log_dict(metrics, prog_bar=False, on_epoch=True, on_step=False, logger=False, sync_dist=True)  # For callbacks
 
     def validation_step(self, batch, batch_idx):
         x, y = batch
@@ -70,12 +75,19 @@ class EngineModule(pl.LightningModule):
     def validation_epoch_end(self, outputs: list):
         z, y = map(torch.cat, zip(*outputs))
         z, y = z.numpy(), y.numpy()
-        _metrics = self.metrics.run(z, y)
+
+        if self.current_epoch % self.full_eval_every_n == 0:
+            z_train, y_train = torch.cat(self.feature_bank_z).numpy(), torch.cat(self.feature_bank_y).numpy()
+            self.feature_bank_z, self.feature_bank_y = list(), list()
+            _metrics = self.metrics.run(z, y, z_train, y_train)
+        else:
+            _metrics = self.metrics.run(z, y)
         metrics = dict()
         for k, v in _metrics.items():
             metrics[f'valid/{k}'] = v
+
         self.logger.experiment.log(metrics, step=self.current_epoch)  # For wandb
-        self.log_dict(metrics, prog_bar=False, on_epoch=True, on_step=False, logger=False)  # For callbacks
+        self.log_dict(metrics, prog_bar=False, on_epoch=True, on_step=False, logger=False, sync_dist=True)  # For callbacks
 
     def configure_optimizers(self):
         optimizers = get_optimizers(self.config.training.optimizer, self.encoder, self.predictor)
