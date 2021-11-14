@@ -3,7 +3,7 @@ import os
 sys.path.append(os.getcwd())
 
 from omegaconf import OmegaConf
-from representation_learning.api import train
+from representation_learning.api import train, evaluate
 
 
 if __name__ == '__main__':
@@ -12,4 +12,5 @@ if __name__ == '__main__':
         raise FileNotFoundError(f'Provided config not found - {config_path}.')
 
     config = OmegaConf.load(config_path)
-    train(config)
+    results = train(config)
+    evaluate(results, config)

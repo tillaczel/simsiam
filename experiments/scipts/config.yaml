@@ -1,6 +1,6 @@
 experiment:
   name: 'name'
-  seed: 2
+  seed: 0
   gpu: -1
 
 dataset:
@@ -8,7 +8,8 @@ dataset:
   batch_size: 512
   train_split_ratio: 0.8
   num_workers: 10
-  val_split: Ture
+  val_split: False
+  n_classes: 10
 
 model:
   projector:
@@ -25,20 +26,34 @@ training:
   optimizer:
     encoder:
       name: 'sgd'
-      lr: 0.03
+      lr: 0.06
       momentum: 0.9
       weight_decay: 0.0005
     predictor:
       name: 'sgd'
-      lr: 0.03
+      lr: 0.06
       momentum: 0.9
       weight_decay: 0.0005
   scheduler:
     encoder:
       name: 'cosine'
     predictor:
-  full_eval_every_n: 10
   ckpt_callback:
     save_top_k: 1
-    monitor: 'valid/top_1_knn_acc'
+    monitor: 'valid/knn_top_1_acc'
     mode: 'max'
+
+evaluation:
+  knn:
+    full_eval_every_n: 10
+    knn_k: 200
+    knn_t: 0.1
+  linear:
+    in_dim: 512
+    max_epochs: 90
+    lr: 30
+    momentum: 0.9
+    weight_decay: 0
+    batch_size: 256
+    num_workers: 10
+

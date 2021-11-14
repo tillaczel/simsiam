@@ -2,8 +2,8 @@ import torch
 from omegaconf import DictConfig
 
 
-def get_optimizers(optim_config: DictConfig, encoder, predictor):
-    enc_opt = get_optimizer(optim_config.encoder, encoder.parameters())
+def get_optimizers(optim_config: DictConfig, resnet, projector, predictor):
+    enc_opt = get_optimizer(optim_config.encoder, list(resnet.parameters()) + list(projector.parameters()))
     pred_opt = get_optimizer(optim_config.predictor, predictor.parameters())
     return [enc_opt, pred_opt]
 

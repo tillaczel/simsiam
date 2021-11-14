@@ -1,6 +1,4 @@
 from torchvision import transforms
-from PIL import ImageFilter
-import random
 
 
 NORMALIZATION_PARAMS = {
@@ -28,7 +26,7 @@ def get_test_transform(normalize):
     return transform
 
 
-def get_transforms(dset_name: str):
+def get_transforms(dset_name):
     norm_params = NORMALIZATION_PARAMS[dset_name]
     normalize = transforms.Normalize(mean=norm_params['mean'],
                                      std=norm_params['std'])
