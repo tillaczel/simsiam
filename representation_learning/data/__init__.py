@@ -26,7 +26,7 @@ def get_datasets(dataset, data_dir, val_split, train_split_ratio, name):
     return train_set, valid_set, test_set, train_set_predict
 
 
-def get_dataloaders(data_cfg: DictConfig, data_dir: str):
+def get_unsupervised_dataloaders(data_cfg: DictConfig, data_dir: str):
     batch_size = data_cfg.batch_size
     train_split_ratio = data_cfg.train_split_ratio
     num_workers = data_cfg.num_workers
@@ -78,12 +78,34 @@ class AugmentDataset(Dataset):
 
 
 class LinearDataset(Dataset):
-    def __init__(self, f, y):
-        self.f, self.y = f, y
+    def __init__(self, f, z, y):
+        self.f, self.z, self.y = f, z, y
 
     def __len__(self):
         return self.y.shape[0]
 
     def __getitem__(self, index):
-        f, y = torch.FloatTensor(self.f[index]), torch.LongTensor([int(self.y[index])])
-        return f, y
+        f, z = torch.FloatTensor(self.f[index]), torch.FloatTensor(self.f[index])
+        y = torch.LongTensor([int(self.y[index])])
+        return f, z, y
+
+
+def get_linear_dataloaders(config, f_train, z_train, y_train, f_valid, z_valid, y_valid, f_test, z_test, y_test):
+    # np.savetxt('z_train.csv', z_train, delimiter=',')
+    # np.savetxt('y_train.csv', y_train, delimiter=',')
+    # np.savetxt('z_valid.csv', z_valid, delimiter=',')
+    # np.savetxt('y_valid.csv', y_valid, delimiter=',')
+    # np.savetxt('z_test.csv', z_test, delimiter=',')
+    # np.savetxt('y_test.csv', y_test, delimiter=',')
+
+    train_set = LinearDataset(f_train, z_train, y_train)
+    valid_set = LinearDataset(f_valid, z_valid, y_valid)
+    test_set = LinearDataset(f_test, z_test, y_test)
+
+    train_dataloader = DataLoader(train_set, batch_size=config.batch_size, num_workers=config.num_workers,
+                                  drop_last=True, shuffle=True, persistent_workers=True)
+    valid_dataloader = DataLoader(valid_set, batch_size=config.batch_size, num_workers=config.num_workers,
+                                  drop_last=False, shuffle=False, persistent_workers=True)
+    test_dataloader = DataLoader(test_set, batch_size=config.batch_size, num_workers=config.num_workers,
+                                 drop_last=False, shuffle=False, persistent_workers=True)
+    return train_dataloader, valid_dataloader, test_dataloader

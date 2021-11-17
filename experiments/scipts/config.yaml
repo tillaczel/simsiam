@@ -1,14 +1,16 @@
 experiment:
-  name: 'name'
   seed: 0
   gpu: -1
+  exp_dir: Null
+  results_dir: Null
+  data_dir: Null
 
 dataset:
   name: 'CIFAR10'
   batch_size: 512
   train_split_ratio: 0.8
-  num_workers: 10
-  val_split: False
+  num_workers: 8
+  val_split: True
   n_classes: 10
 
 model:
@@ -22,7 +24,7 @@ model:
     out_bn: False
 
 training:
-  max_epochs: 800
+  max_epochs: 200
   optimizer:
     encoder:
       name: 'sgd'

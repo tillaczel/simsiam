@@ -16,8 +16,8 @@ def crecte_ckpt_callback(ckpt_config: DictConfig):
 
 
 def create_logger(config: DictConfig):
-    logger = loggers.WandbLogger(project='representation_learning', save_dir=config.experiment.save_dir, config=config,
-                                 log_model='all')
+    logger = loggers.WandbLogger(project='representation_learning', save_dir=config.experiment.results_dir,
+                                 config=config, log_model='all')
     return logger
 
 

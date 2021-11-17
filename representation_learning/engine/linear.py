@@ -18,7 +18,7 @@ class LinearEngine(pl.LightningModule):
         self.criterion = torch.nn.CrossEntropyLoss()
 
     def training_step(self, batch, batch_idx):
-        f, y = batch
+        f, z, y = batch
         y_hat = self.model(f)
         loss = self.criterion(y_hat, y[:, 0])
         return loss
@@ -27,10 +27,10 @@ class LinearEngine(pl.LightningModule):
         pass
 
     def validation_step(self, batch, batch_idx):
-        f, y = batch
+        f, z, y = batch
         y_hat = self.model(f)
         y_hat = torch.argsort(y_hat, descending=True)
-        return y_hat.detach().cpu(), y
+        return y_hat.detach().cpu(), y.cpu()
 
     def validation_epoch_end(self, outputs: list):
         self.calc_acc(outputs, 'valid')
@@ -47,7 +47,7 @@ class LinearEngine(pl.LightningModule):
         _acc = get_accuracy(y_hat.numpy(), y.numpy(), (1, 3, 5))
         for k, v in _acc.items():
             acc[f'linear/{data_split}_{k}'] = v
-        wandb.log(acc, step=self.current_epoch)
+        wandb.log(acc)
 
     def configure_optimizers(self):
         optimizer = optim.SGD(self.parameters(), lr=self.lr, momentum=self.momentum, weight_decay=self.weight_decay)

@@ -35,6 +35,12 @@ class UnsupervisedEngine(pl.LightningModule):
         }
         return result
 
+    @property
+    def full_eval(self):
+        eval_epoch = self.current_epoch % self.full_eval_every_n == 0
+        last_epoch = self.config.training.max_epochs-1 == self.current_epoch
+        return eval_epoch or last_epoch
+
     def forward(self, x):
         x = self.resnet(x)
         return x
@@ -53,7 +59,7 @@ class UnsupervisedEngine(pl.LightningModule):
 
         self.log_dict(self.lr, prog_bar=True, on_step=True, logger=False)  # For progress bar
         self.epoch_losses.append(loss.detach().cpu().numpy())
-        if self.current_epoch % self.full_eval_every_n == 0:
+        if self.full_eval:
             self.resnet.eval(), self.projector.eval()
             with torch.no_grad():
                 f = self.resnet(x)
@@ -63,15 +69,15 @@ class UnsupervisedEngine(pl.LightningModule):
             self.resnet.train(), self.projector.train()
 
     def training_epoch_end(self, outputs: list):
-        scheduler = self.lr_schedulers()
-        scheduler.step()
-
         loss = np.mean(self.epoch_losses)
         self.epoch_losses = list()
         metrics = {'train/loss': loss}
         metrics.update({f'train/{k}': v for k, v in self.lr.items()})
         self.logger.experiment.log(metrics, step=self.current_epoch)  # For wandb
         self.log_dict(metrics, prog_bar=False, on_epoch=True, on_step=False, logger=False, sync_dist=True)  # For callbacks
+
+        scheduler = self.lr_schedulers()
+        scheduler.step()
 
     def validation_step(self, batch, batch_idx):
         x, y = batch
@@ -80,10 +86,13 @@ class UnsupervisedEngine(pl.LightningModule):
         return f.detach().cpu(), z.detach().cpu(), y.detach().cpu()
 
     def validation_epoch_end(self, outputs: list):
+        self.calc_acc(outputs, 'valid')
+
+    def calc_acc(self, outputs, data_split):
         f, z, y = map(torch.cat, zip(*outputs))
         f, z, y = f.numpy(), z.numpy(), y.numpy()
 
-        if self.current_epoch % self.full_eval_every_n == 0:
+        if self.full_eval:
             f_train, z_train = torch.cat(self.feature_bank_f).numpy(), torch.cat(self.feature_bank_z).numpy()
             y_train = torch.cat(self.feature_bank_y).numpy()
             self.feature_bank_f, self.feature_bank_z, self.feature_bank_y = list(), list(), list()
@@ -92,14 +101,16 @@ class UnsupervisedEngine(pl.LightningModule):
             _metrics = self.metrics.run(f, z, y)
         metrics = dict()
         for k, v in _metrics.items():
-            metrics[f'valid/{k}'] = v
+            metrics[f'{data_split}/{k}'] = v
 
         self.logger.experiment.log(metrics, step=self.current_epoch)  # For wandb
         self.log_dict(metrics, prog_bar=False, on_epoch=True, on_step=False, logger=False, sync_dist=True)  # For callbacks
 
     def predict_step(self, batch, batch_idx, dataloader_idx=0):
         x, y = batch
-        return self.resnet(x).detach().cpu(), y.detach().cpu()
+        f = self.resnet(x)
+        z = self.projector(f)
+        return f.detach().cpu(), z.detach().cpu(), y.detach().cpu()
 
     def configure_optimizers(self):
         optimizers = get_optimizers(self.config.training.optimizer, self.resnet, self.projector, self.predictor)
