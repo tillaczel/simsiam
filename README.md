@@ -29,3 +29,7 @@ Go to browser and type:
 ```
 localhost:8888
 ```
+
+```
+jupyter notebook --ip 0.0.0.0 --port 8888 --no-browser --allow-root
+```

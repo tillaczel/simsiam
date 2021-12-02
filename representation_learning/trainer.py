@@ -8,7 +8,6 @@ from pytorch_lightning.callbacks import ModelCheckpoint, progress
 
 def crecte_ckpt_callback(ckpt_config: DictConfig):
     return ModelCheckpoint(
-        filename='epoch',
         save_top_k=ckpt_config.save_top_k,
         monitor=ckpt_config.monitor,
         mode=ckpt_config.mode,
@@ -16,6 +15,8 @@ def crecte_ckpt_callback(ckpt_config: DictConfig):
 
 
 def create_logger(config: DictConfig):
+    wandb.init(project='representation_learning')
+    wandb.save('*.ckpt')
     logger = loggers.WandbLogger(project='representation_learning', save_dir=config.experiment.results_dir,
                                  config=config, log_model='all')
     return logger

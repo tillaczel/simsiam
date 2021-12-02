@@ -8,11 +8,12 @@ import wandb
 
 class LinearEngine(pl.LightningModule):
 
-    def __init__(self, embedding_dim, n_classes, lr, momentum, weight_decay, max_epoch):
+    def __init__(self, embedding_dim, n_classes, lr, momentum, weight_decay, max_epoch, subset=100):
         super().__init__()
         self.embedding_dim = embedding_dim
         self.n_classes = n_classes
         self.lr, self.momentum, self.weight_decay, self.max_epoch = lr, momentum, weight_decay, max_epoch
+        self.subset = subset
 
         self.model = nn.Linear(embedding_dim, n_classes)
         self.criterion = torch.nn.CrossEntropyLoss()
@@ -41,12 +42,15 @@ class LinearEngine(pl.LightningModule):
     def test_epoch_end(self, outputs: list):
         self.calc_acc(outputs, 'test')
 
+    def predict_step(self, batch, batch_idx, dataloader_idx=0):
+        return self.validation_step(batch, batch_idx)
+
     def calc_acc(self, outputs, data_split):
         y_hat, y = map(torch.cat, zip(*outputs))
         acc = dict()
         _acc = get_accuracy(y_hat.numpy(), y.numpy(), (1, 3, 5))
         for k, v in _acc.items():
-            acc[f'linear/{data_split}_{k}'] = v
+            acc[f'linear/{self.subset}_{data_split}_{k}'] = v
         wandb.log(acc)
 
     def configure_optimizers(self):

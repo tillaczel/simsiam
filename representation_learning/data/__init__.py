@@ -2,12 +2,14 @@ from omegaconf import DictConfig
 import torch
 from torch.utils.data import random_split, Dataset, DataLoader
 from torchvision import datasets
+import numpy as np
+import os
 
 from representation_learning.data.tranforms import get_transforms
 
 
-def get_datasets(dataset, data_dir, val_split, train_split_ratio, name):
-    train_transform, test_transform = get_transforms(name)
+def get_datasets(dataset, data_dir, val_split, train_split_ratio, name, normalize_bool=True):
+    train_transform, test_transform = get_transforms(name, normalize_bool)
 
     _test_set = dataset(data_dir, train=False, download=True)
 
@@ -26,14 +28,14 @@ def get_datasets(dataset, data_dir, val_split, train_split_ratio, name):
     return train_set, valid_set, test_set, train_set_predict
 
 
-def get_unsupervised_dataloaders(data_cfg: DictConfig, data_dir: str):
+def get_unsupervised_dataloaders(data_cfg: DictConfig, data_dir: str, normalize_bool=True):
     batch_size = data_cfg.batch_size
     train_split_ratio = data_cfg.train_split_ratio
     num_workers = data_cfg.num_workers
     val_split = data_cfg.val_split
 
     train_set, valid_set, test_set, train_set_predict = \
-        get_datasets(datasets.CIFAR10, data_dir, val_split, train_split_ratio, data_cfg.name)
+        get_datasets(datasets.CIFAR10, data_dir, val_split, train_split_ratio, data_cfg.name, normalize_bool)
 
     train_dataloader = DataLoader(train_set, batch_size=batch_size, num_workers=num_workers,
                                   drop_last=True, shuffle=True, persistent_workers=True)
@@ -91,21 +93,14 @@ class LinearDataset(Dataset):
 
 
 def get_linear_dataloaders(config, f_train, z_train, y_train, f_valid, z_valid, y_valid, f_test, z_test, y_test):
-    # np.savetxt('z_train.csv', z_train, delimiter=',')
-    # np.savetxt('y_train.csv', y_train, delimiter=',')
-    # np.savetxt('z_valid.csv', z_valid, delimiter=',')
-    # np.savetxt('y_valid.csv', y_valid, delimiter=',')
-    # np.savetxt('z_test.csv', z_test, delimiter=',')
-    # np.savetxt('y_test.csv', y_test, delimiter=',')
-
     train_set = LinearDataset(f_train, z_train, y_train)
     valid_set = LinearDataset(f_valid, z_valid, y_valid)
     test_set = LinearDataset(f_test, z_test, y_test)
 
     train_dataloader = DataLoader(train_set, batch_size=config.batch_size, num_workers=config.num_workers,
-                                  drop_last=True, shuffle=True, persistent_workers=True)
+                                  drop_last=True, shuffle=True)
     valid_dataloader = DataLoader(valid_set, batch_size=config.batch_size, num_workers=config.num_workers,
-                                  drop_last=False, shuffle=False, persistent_workers=True)
+                                  drop_last=False, shuffle=False)
     test_dataloader = DataLoader(test_set, batch_size=config.batch_size, num_workers=config.num_workers,
-                                 drop_last=False, shuffle=False, persistent_workers=True)
+                                 drop_last=False, shuffle=False)
     return train_dataloader, valid_dataloader, test_dataloader

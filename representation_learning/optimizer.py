@@ -23,17 +23,17 @@ def get_optimizer(optim_config: DictConfig, params):
 def get_schedulers(training_config, optimizers):
     result = list()
     if training_config.scheduler.encoder is not None:
-        result.append(get_scheduler(training_config, training_config.scheduler.encoder, optimizers[0]))
+        result.append(get_scheduler(training_config.scheduler.encoder, optimizers[0]))
     if training_config.scheduler.predictor is not None:
-        result.append(get_scheduler(training_config, training_config.scheduler.predictor, optimizers[1]))
+        result.append(get_scheduler(training_config.scheduler.predictor, optimizers[1]))
     return result
 
 
-def get_scheduler(training_config, scheduler_config, optimizer):
+def get_scheduler(scheduler_config, optimizer):
     name = scheduler_config.name
     if name == 'cosine':
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer,
-                                                               T_max=training_config.max_epochs)
+                                                               T_max=scheduler_config.max_epochs)
         return dict(scheduler=scheduler)
     else:
         raise ValueError(f'{name} not in schedulers')
