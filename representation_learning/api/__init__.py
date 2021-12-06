@@ -31,6 +31,7 @@ def train(config: DictConfig):
     trainer.fit(engine, train_dataloader, val_dataloader)
     path = os.path.join(engine.logger.save_dir, engine.logger.experiment.project, engine.logger.experiment.id, 'model.ckpt')
     engine.trainer.save_checkpoint(path)
+    wandb.save(path)
 
     outputs = trainer.predict(engine, train_predict_dataloader)
     f_train, z_train, y_train = map(np.concatenate, zip(*outputs))
@@ -85,7 +86,7 @@ def evaluate(results, config: DictConfig):
         _acc = get_accuracy(y_hat.numpy(), y.numpy(), (1, 3, 5))
         for k, v in _acc.items():
             metrics_results[f'{subset}/linear_{k}'] = v
-        wandb.log(metrics_results)
+    wandb.log(metrics_results)
 
     return metrics_results
 

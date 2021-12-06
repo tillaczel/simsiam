@@ -2,3 +2,4 @@ pytorch-lightning
 omegaconf
 wandb
 hydra-core
+jupyter
