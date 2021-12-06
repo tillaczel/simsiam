@@ -12,7 +12,7 @@ Test accuracy in percentage. Note that the [SimSiam](https://arxiv.org/abs/2011.
     <th>linear acc.</th>
   </tr>
   <tr>
-    <th><a href="https://arxiv.org/abs/2011.10566">SimSiam</a></th>
+    <th>SimSiam</th>
     <th>∼90</th>
     <th>91.8</th>
   </tr>
