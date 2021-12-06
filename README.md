@@ -1,7 +1,7 @@
 # SimSiam: simple siamese networks for pretraining on unlabeled data
 Pytorch implementation of the [SimSiam](https://arxiv.org/abs/2011.10566) paper. <br/>
 
-[[`report`]("https://github.com/tillaczel/simsiam/tree/main/figures/report.pdf")] [[`poster`]("https://github.com/tillaczel/simsiam/tree/main/figures/poster.pdf")]
+[[report]("https://github.com/tillaczel/simsiam/tree/main/figures/report.pdf")] [[poster]("https://github.com/tillaczel/simsiam/tree/main/figures/poster.pdf")]
 
 ## Results
 Test accuracy in percentage. Note that the [SimSiam](https://arxiv.org/abs/2011.10566) linear accuracy result is with the LARS optimizer.
