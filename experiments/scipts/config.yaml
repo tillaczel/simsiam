@@ -1,7 +1,6 @@
 experiment:
   seed: 0
   gpu: -1
-  exp_dir: Null
   results_dir: Null
   data_dir: Null
 

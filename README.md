@@ -48,7 +48,7 @@ docker build -t simsiam .
 
 ### Starting a training
 ```
-docker run --rm -it --name='training' -v /home/till/PycharmProjects/representation_learning:/representation_learning --shm-size=4g --gpus all simsiam
+docker run --rm -it --name='training' -v /home/till/PycharmProjects/simsiam:/simsiam --shm-size=4g --gpus all simsiam
 cd simsiam
 ```
 Insert the directory paths to `${EXP_DIR}`, `${RESULTS_DIR}` and `${DATA_DIR}`. Note if you are using your own environment you have to be at the  repository root.
@@ -64,16 +64,16 @@ or change the [config.yaml](https://github.com/tillaczel/simsiam/tree/main/exper
 ### Starting tensorboard
 All the experiment results can be seen in TensorBoard. To start TensorBoard type:
 ```
-docker run --rm -it --name='tensorboard' -p:8887:8887 -v /home/till/PycharmProjects/representation_learning:/representation_learning simsiam
-tensorboard --logdir=/representation_learning/local/name/ --host 0.0.0.0 --port 8887
+docker run --rm -it --name='tensorboard' -p:8887:8887 -v /home/till/PycharmProjects/simsiam:/simsiam simsiam
+tensorboard --logdir=/simsiam/local/name/ --host 0.0.0.0 --port 8887
 localhost:8887
 ```
 
 ### Starting visualization notebooks
 Some notebooks are included to visualize the results. You need to replace the wandb paths to your models.
 ```
-docker run --rm -it --name='notebook' -p:8886:8886 -v /home/till/PycharmProjects/representation_learning:/representation_learning simsiam
-jupyter notebook --ip 0.0.0.0 --port 8888 --no-browser --allow-root
+docker run --rm -it --name='notebook' -p:8886:8886 -v /home/till/PycharmProjects/simsiam:/simsiam --shm-size=4g --gpus all simsiam
+jupyter notebook --ip 0.0.0.0 --port 8886 --no-browser --allow-root
 ```
 Go to browser and type:
 ```

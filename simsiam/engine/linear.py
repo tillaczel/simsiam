@@ -2,7 +2,7 @@ import pytorch_lightning as pl
 import torch
 from torch import nn
 from torch import optim
-from representation_learning.metrics import get_accuracy
+from simsiam.metrics import get_accuracy
 import wandb
 
 

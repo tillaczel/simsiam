@@ -5,7 +5,7 @@ from torchvision import datasets
 import numpy as np
 import os
 
-from representation_learning.data.tranforms import get_transforms
+from simsiam.data.tranforms import get_transforms
 
 
 def get_datasets(dataset, data_dir, val_split, train_split_ratio, name, normalize_bool=True):

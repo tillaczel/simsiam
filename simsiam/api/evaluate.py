@@ -1,45 +1,6 @@
-import os
-import pytorch_lightning as pl
-from omegaconf import DictConfig, OmegaConf
-import numpy as np
-import wandb
-import torch
-
-from representation_learning.data import get_unsupervised_dataloaders, get_linear_dataloaders
-from representation_learning.engine import UnsupervisedEngine, LinearEngine
-from representation_learning.trainer import create_trainer
-from representation_learning.utils import mkdir_if_missing
-from representation_learning.metrics import Metrics, get_accuracy
-
-
-def make_dirs(config: DictConfig):
-    mkdir_if_missing(config.experiment.exp_dir)
-    mkdir_if_missing(config.experiment.results_dir)
-    mkdir_if_missing(config.experiment.data_dir)
-    return config
-
-
-def train(config: DictConfig):
-    config = make_dirs(config)
-
-    pl.seed_everything(config.experiment.seed)
-    train_dataloader, val_dataloader, test_dataloader, train_predict_dataloader\
-        = get_unsupervised_dataloaders(config.dataset, config.experiment.data_dir)
-    engine = UnsupervisedEngine(config)
-    trainer = create_trainer(config)
-
-    trainer.fit(engine, train_dataloader, val_dataloader)
-    path = os.path.join(engine.logger.save_dir, engine.logger.experiment.project, engine.logger.experiment.id, 'model.ckpt')
-    engine.trainer.save_checkpoint(path)
-    wandb.save(path)
-
-    outputs = trainer.predict(engine, train_predict_dataloader)
-    f_train, z_train, y_train = map(np.concatenate, zip(*outputs))
-    outputs = trainer.predict(engine, val_dataloader)
-    f_valid, z_valid, y_valid = map(np.concatenate, zip(*outputs))
-    outputs = trainer.predict(engine, test_dataloader)
-    f_test, z_test, y_test = map(np.concatenate, zip(*outputs))
-    return f_train, z_train, y_train, f_valid, z_valid, y_valid, f_test, z_test, y_test
+from simsiam.data import get_linear_dataloaders
+from simsiam.engine import LinearEngine
+from simsiam.metrics import Metrics, get_accuracy
 
 
 def evaluate(results, config: DictConfig):
@@ -89,6 +50,3 @@ def evaluate(results, config: DictConfig):
     wandb.log(metrics_results)
 
     return metrics_results
-
-
-

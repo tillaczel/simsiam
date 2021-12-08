@@ -3,10 +3,10 @@ import pytorch_lightning as pl
 import numpy as np
 import torch
 
-from representation_learning.models import get_encoder, get_predictor
-from representation_learning.optimizer import get_optimizers, get_schedulers
-from representation_learning.loss import symmetric_cos_dist
-from representation_learning.metrics import Metrics
+from simsiam.models import get_encoder, get_predictor
+from simsiam.optimizer import get_optimizers, get_schedulers
+from simsiam.loss import symmetric_cos_dist
+from simsiam.metrics import Metrics
 
 
 class UnsupervisedEngine(pl.LightningModule):
