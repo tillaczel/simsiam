@@ -30,7 +30,7 @@ Test accuracy in percentage. Note that the [SimSiam](https://arxiv.org/abs/2011.
 
 
 ## Prerequisites
-This repository was tested with Python 3.8.8, pytorch 1.8.0 and cuda11.1. <br/>
+This repository was tested with Python 3.8.9, pytorch 1.10.0 and cuda11.3. <br/>
 
 ### Docker
 For easy running I included a Docker Container. For using it please install: <br/>
