@@ -61,14 +61,6 @@ python3 experiments/scripts/unsupervised/run.py training.max_epochs=200
 ```
 or change the [config.yaml](https://github.com/tillaczel/simsiam/tree/main/experiments/scipts/config.yaml) file.
 
-### Starting tensorboard
-All the experiment results can be seen in TensorBoard. To start TensorBoard replace `${PATH_TO_REPO}` and run:
-```
-docker run --rm -it --name='tensorboard' -p:8887:8887 -v ${PATH_TO_REPO}:/simsiam simsiam
-tensorboard --logdir=/simsiam/local/name/ --host 0.0.0.0 --port 8887
-localhost:8887
-```
-
 ### Starting visualization notebooks
 Some notebooks are included to visualize the results. You need to replace the wandb paths to your models.
 ```
