@@ -55,8 +55,7 @@ class UnsupervisedEngine(pl.LightningModule):
         f1, f2 = self.resnet(x1), self.resnet(x2)
         z1, z2 = self.projector(f1), self.projector(f2)
         p1, p2 = self.predictor(z1), self.predictor(z2)
-        # loss = self.loss_func(z1.detach(), z2.detach(), p1, p2)
-        loss = self.loss_func(z1, z2, p1, p2)
+        loss = self.loss_func(z1.detach(), z2.detach(), p1, p2)
 
         loss.backward()
         opt_enc.step(), opt_pred.step()

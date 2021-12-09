@@ -2,7 +2,6 @@ experiment:
   name: default
   seed: 0
   gpu: -1
-  supervised: False
 
 dataset:
   name: 'CIFAR10'
@@ -23,7 +22,7 @@ model:
     out_bn: False
 
 training:
-  max_epochs: 1000
+  max_epochs: 200
   optimizer:
     encoder:
       name: 'sgd'
@@ -38,7 +37,7 @@ training:
   scheduler:
     encoder:
       name: 'cosine'
-      max_epochs: 1000
+      max_epochs: 200
     predictor:
   ckpt_callback:
     save_top_k: 1

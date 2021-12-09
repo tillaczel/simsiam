@@ -1,0 +1,29 @@
+experiment:
+  name: default
+  seed: 0
+  gpu: -1
+
+dataset:
+  name: 'CIFAR10'
+  batch_size: 512
+  train_split_ratio: 0.8
+  num_workers: 8
+  val_split: True
+  n_classes: 10
+  subset: 100
+
+training:
+  max_epochs: 200
+  optimizer:
+    name: 'sgd'
+    lr: 0.06
+    momentum: 0.9
+    weight_decay: 0.0005
+  scheduler:
+    name: 'cosine'
+    max_epochs: 200
+  ckpt_callback:
+    save_top_k: 1
+    monitor:
+    mode: 'max'
+

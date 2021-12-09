@@ -16,7 +16,6 @@ class SupervisedEngine(pl.LightningModule):
         self.config = config
         self.resnet = get_resnet(num_classes=config.dataset.n_classes)
         self.loss_func = torch.nn.CrossEntropyLoss()
-        self.subset = 100
 
         self.predict_step = self.validation_step
         self.test_step = self.validation_step
@@ -59,16 +58,16 @@ class SupervisedEngine(pl.LightningModule):
         acc = dict()
         _acc = get_accuracy(y_hat, y, (1, 3, 5))
         for k, v in _acc.items():
-            acc[f'{data_split}/{self.subset}_supervised_{k}'] = v
+            acc[f'{data_split}/{self.config.dataset.subset}_supervised_{k}'] = v
         self.logger.experiment.log(acc, step=self.current_epoch)  # For wandb
         self.log_dict(acc, prog_bar=False, on_epoch=True, on_step=False, logger=False,
                       sync_dist=True)  # For callbacks
 
     def configure_optimizers(self):
         training_config = self.config.training
-        optimizer = get_optimizer(training_config.optimizer.encoder, self.resnet.parameters())
-        if training_config.scheduler is not None and training_config.scheduler.encoder is not None:
-            scheduler = get_scheduler(training_config.scheduler.encoder, optimizer)
+        optimizer = get_optimizer(training_config.optimizer, self.resnet.parameters())
+        if training_config.scheduler is not None:
+            scheduler = get_scheduler(training_config.scheduler, optimizer)
             return [optimizer], [scheduler]
         else:
             return optimizer

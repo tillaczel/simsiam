@@ -8,6 +8,7 @@ import torch
 from simsiam.data import get_linear_dataloaders
 from simsiam.engine import LinearEngine
 from simsiam.metrics import Metrics, get_accuracy
+from simsiam.utils import get_subset_idx
 
 
 def evaluate(results, config: DictConfig):
@@ -16,15 +17,7 @@ def evaluate(results, config: DictConfig):
                       knn_t=config.evaluation.knn.knn_t)
     metrics_results = dict()
     for subset in [100, 10, 1]:
-        if y_train.shape[0] == 40000:
-            idx = np.genfromtxt(os.path.join(config.experiment.exp_dir, 'shuffle_index', 'idx_40000.csv'),
-                                delimiter=',')
-        elif y_train.shape[0] == 50000:
-            idx = np.genfromtxt(os.path.join(config.experiment.exp_dir, 'shuffle_index', 'idx_50000.csv'),
-                                delimiter=',')
-        else:
-            raise AssertionError('Training data not the right size')
-        idx = idx[:int(idx.shape[0] * subset / 100)].astype(np.int32)
+        idx = get_subset_idx(subset, config.experiment.exp_dir, config.dataset.val_split)
         _f_train, _z_train, _y_train = f_train[idx], z_train[idx], y_train[idx]
 
         _metrics_results = metrics.run(f_valid, z_valid, y_valid, _f_train, _z_train, _y_train)

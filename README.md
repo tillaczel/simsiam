@@ -47,23 +47,24 @@ docker build -t simsiam .
 ```
 
 ### Starting a training
+Please replace `${PATH_TO_REPO}` and run
 ```
-docker run --rm -it --name='training' -v /home/till/PycharmProjects/simsiam:/simsiam --shm-size=4g --gpus all simsiam
+docker run --rm -it --name='training' -v ${PATH_TO_REPO}:/simsiam --shm-size=4g --gpus all simsiam
 ```
 Note if you are using your own environment you have to be at the repository root.
 ```
-python3 experiments/scripts/run.py
+python3 experiments/scripts/unsupervised/run.py
 ```
 For changing the hyper-parameters either use arguments:
 ```
-python3 experiments/scripts/run.py training.max_epochs=200
+python3 experiments/scripts/unsupervised/run.py training.max_epochs=200
 ```
 or change the [config.yaml](https://github.com/tillaczel/simsiam/tree/main/experiments/scipts/config.yaml) file.
 
 ### Starting tensorboard
-All the experiment results can be seen in TensorBoard. To start TensorBoard type:
+All the experiment results can be seen in TensorBoard. To start TensorBoard replace `${PATH_TO_REPO}` and run:
 ```
-docker run --rm -it --name='tensorboard' -p:8887:8887 -v /home/till/PycharmProjects/simsiam:/simsiam simsiam
+docker run --rm -it --name='tensorboard' -p:8887:8887 -v ${PATH_TO_REPO}:/simsiam simsiam
 tensorboard --logdir=/simsiam/local/name/ --host 0.0.0.0 --port 8887
 localhost:8887
 ```
@@ -71,7 +72,7 @@ localhost:8887
 ### Starting visualization notebooks
 Some notebooks are included to visualize the results. You need to replace the wandb paths to your models.
 ```
-docker run --rm -it --name='notebook' -p:8886:8886 -v /home/till/PycharmProjects/simsiam:/simsiam --shm-size=4g --gpus all simsiam
+docker run --rm -it --name='notebook' -p:8886:8886 -v ${PATH_TO_REPO}:/simsiam --shm-size=4g --gpus all simsiam
 jupyter notebook --ip 0.0.0.0 --port 8886 --no-browser --allow-root
 ```
 Go to browser and type:
