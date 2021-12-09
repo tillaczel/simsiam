@@ -1,25 +1,27 @@
-from simsiam.data import get_unsupervised_dataloaders
-from simsiam.engine import UnsupervisedEngine
+import os
+import pytorch_lightning as pl
+from omegaconf import DictConfig
+import numpy as np
+import wandb
+
+from simsiam.data import get_unsupervised_dataloaders, get_supervised_dataloaders
+from simsiam.engine import UnsupervisedEngine, SupervisedEngine
 from simsiam.trainer import create_trainer
-from simsiam.utils import mkdir_if_missing
-
-
-def make_dirs(config: DictConfig):
-    with open_dict(config):
-        config.experiment.exp_dir = os.path.join(os.getcwd(), 'experiments')
-    mkdir_if_missing(config.experiment.exp_dir)
-    mkdir_if_missing(config.experiment.results_dir)
-    mkdir_if_missing(config.experiment.data_dir)
-    return config
+from simsiam.utils import make_dirs
 
 
 def train(config: DictConfig):
     config = make_dirs(config)
 
     pl.seed_everything(config.experiment.seed)
-    train_dataloader, val_dataloader, test_dataloader, train_predict_dataloader\
-        = get_unsupervised_dataloaders(config.dataset, config.experiment.data_dir)
-    engine = UnsupervisedEngine(config)
+    if config.experiment.supervised:
+        engine = SupervisedEngine(config)
+        train_dataloader, val_dataloader, test_dataloader, train_predict_dataloader \
+            = get_supervised_dataloaders(config.dataset, config.experiment.data_dir)
+    else:
+        engine = UnsupervisedEngine(config)
+        train_dataloader, val_dataloader, test_dataloader, train_predict_dataloader \
+            = get_unsupervised_dataloaders(config.dataset, config.experiment.data_dir)
     trainer = create_trainer(config)
 
     trainer.fit(engine, train_dataloader, val_dataloader)
@@ -34,3 +36,4 @@ def train(config: DictConfig):
     outputs = trainer.predict(engine, test_dataloader)
     f_test, z_test, y_test = map(np.concatenate, zip(*outputs))
     return f_train, z_train, y_train, f_valid, z_valid, y_valid, f_test, z_test, y_test
+

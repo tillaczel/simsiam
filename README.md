@@ -49,15 +49,14 @@ docker build -t simsiam .
 ### Starting a training
 ```
 docker run --rm -it --name='training' -v /home/till/PycharmProjects/simsiam:/simsiam --shm-size=4g --gpus all simsiam
-cd simsiam
 ```
-Insert the directory paths to `${EXP_DIR}`, `${RESULTS_DIR}` and `${DATA_DIR}`. Note if you are using your own environment you have to be at the  repository root.
+Note if you are using your own environment you have to be at the repository root.
 ```
-python3 experiments/scripts/run.py experiment.exp_dir=${EXP_DIR} experiment.results_dir=${RESULTS_DIR} experiment.data_dir=${DATA_DIR}
+python3 experiments/scripts/run.py
 ```
 For changing the hyper-parameters either use arguments:
 ```
-python3 experiments/scripts/run.py training.max_epochs=200 experiment.exp_dir=${EXP_DIR} experiment.results_dir=${RESULTS_DIR} experiment.data_dir=${DATA_DIR}
+python3 experiments/scripts/run.py training.max_epochs=200
 ```
 or change the [config.yaml](https://github.com/tillaczel/simsiam/tree/main/experiments/scipts/config.yaml) file.
 

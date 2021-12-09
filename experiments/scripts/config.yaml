@@ -1,8 +1,8 @@
 experiment:
+  name: default
   seed: 0
   gpu: -1
-  results_dir: Null
-  data_dir: Null
+  supervised: False
 
 dataset:
   name: 'CIFAR10'
@@ -42,7 +42,7 @@ training:
     predictor:
   ckpt_callback:
     save_top_k: 1
-    monitor: 'valid/full_knn_top_1_acc'
+    monitor:
     mode: 'max'
 
 evaluation:

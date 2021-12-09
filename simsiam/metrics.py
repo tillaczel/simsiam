@@ -9,12 +9,13 @@ class Metrics:
         self.knn_k = knn_k
         self.knn_t = knn_t
 
-    def run(self, f_test: np.array, z_test: np.array, y_test: np.array,
-            f_train: np.array = None, z_train: np.array = None, y_train: np.array = None):
+    def run(self, f_test: np.array, g_test: np.array, y_test: np.array,
+            f_train: np.array, g_train: np.array, y_train: np.array):
         result = dict()
         result.update(self.knn_acc(f_test, y_test, f_train, y_train))
-        result.update(self.emb_std(z_train, z_test))
-        result.update(self.emb_corr(z_train, z_test))
+        if g_train is not None and g_test is not None:
+            result.update(self.emb_std(g_train, g_test))
+            result.update(self.emb_corr(g_train, g_test))
         return result
 
     # knn monitor as in InstDisc https://arxiv.org/abs/1805.01978
@@ -46,33 +47,23 @@ class Metrics:
         return pred_labels.numpy()
 
     def knn_acc(self, x_test, y_test, x_train, y_train):
-        sim_weight, sim_indices = self.calc_sim(x_test, x_test, self.knn_k+1)
-        sim_weight, sim_indices = sim_weight[:, 1:], sim_indices[:, 1:]
-        pred_labels = self.knn_predict(sim_weight, sim_indices, y_test)
-        acc = dict()
+        sim_weight, sim_indices = self.calc_sim(x_test, x_train, self.knn_k)
+        pred_labels = self.knn_predict(sim_weight, sim_indices, y_train)
         _acc = get_accuracy(pred_labels, y_test, self.top_k)
+        acc = dict()
+
         for k, v in _acc.items():
-            acc[f'knn_{k}'] = v
-        if x_train is not None and y_train is not None:
-            sim_weight, sim_indices = self.calc_sim(x_test, x_train, self.knn_k)
-            pred_labels = self.knn_predict(sim_weight, sim_indices, y_train)
-            _acc = get_accuracy(pred_labels, y_test, self.top_k)
-            for k, v in _acc.items():
-                acc[f'full_knn_{k}'] = v
+            acc[f'full_knn_{k}'] = v
         return acc
 
     def emb_std(self, x_train, x_test):
         result = dict()
-        if x_train is not None:
-            result['full_gallery_std'] = np.mean(np.std(x_train, axis=0))
-        result['query_std'] = np.mean(np.std(x_test, axis=0))
+        result['full_gallery_std'] = np.mean(np.std(x_train, axis=0))
         return result
 
     def emb_corr(self, x_train, x_test):
         result = dict()
-        if x_train is not None:
-            result['full_gallery_corr'] = np.mean(np.abs(np.corrcoef(x_train.T)))-1/x_train.shape[1]
-        result['query_corr'] = np.mean(np.abs(np.corrcoef(x_test.T)))-1/x_test.shape[1]
+        result['full_gallery_corr'] = np.mean(np.abs(np.corrcoef(x_train.T)))-1/x_train.shape[1]
         return result
 
 

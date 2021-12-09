@@ -11,9 +11,15 @@ class Identity(nn.Module):
         return x
 
 
-def get_encoder(n_p_layers: int = 3, emb_dim: int = 2048, out_bn: bool = True):
-    resnet = models.resnet18(num_classes=emb_dim, zero_init_residual=True)
+def get_resnet(num_classes, zero_init_residual=True):
+    resnet = models.resnet18(num_classes=num_classes, zero_init_residual=zero_init_residual)
+    resnet.conv1 = Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
+    resnet.maxpool = Identity()
+    return resnet
 
+
+def get_encoder(n_p_layers: int = 3, emb_dim: int = 2048, out_bn: bool = True):
+    resnet = get_resnet(num_classes=emb_dim)
     hid_dim = resnet.fc.weight.shape[1]
 
     # projector
@@ -28,8 +34,6 @@ def get_encoder(n_p_layers: int = 3, emb_dim: int = 2048, out_bn: bool = True):
         layers.append(BatchNorm1d(emb_dim, affine=False))
     projector = Sequential(*layers)
 
-    resnet.conv1 = Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
-    resnet.maxpool = Identity()
     resnet.fc = Identity()
     return resnet, projector
 

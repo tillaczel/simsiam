@@ -1,4 +1,4 @@
-FROM pytorch/pytorch:1.8.0-cuda11.1-cudnn8-devel
+FROM pytorch/pytorch:1.10.0-cuda11.3-cudnn8-devel
 
 RUN pip3 install --upgrade pip
 COPY requirements.txt /tmp

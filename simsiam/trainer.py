@@ -16,6 +16,7 @@ def crecte_ckpt_callback(ckpt_config: DictConfig):
 
 def create_logger(config: DictConfig):
     wandb.init(project='representation_learning')
+    wandb.run.name = config.experiment.name
     wandb.save('*.ckpt')
     logger = loggers.WandbLogger(project='representation_learning', save_dir=config.experiment.results_dir,
                                  config=config, log_model='all')
@@ -24,13 +25,12 @@ def create_logger(config: DictConfig):
 
 def create_trainer(config: DictConfig):
     logger = create_logger(config)
-    _callbacks = [progress.ProgressBar(), crecte_ckpt_callback(config.training.ckpt_callback)]
+    _callbacks = [crecte_ckpt_callback(config.training.ckpt_callback)]
     trainer = pl.Trainer(logger=logger,
                          gpus=config.experiment.gpu,
                          max_epochs=config.training.max_epochs,
-                         progress_bar_refresh_rate=20,
                          deterministic=True,
-                         terminate_on_nan=True,
+                         detect_anomaly=True,
                          num_sanity_val_steps=0,
                          callbacks=_callbacks
                          )

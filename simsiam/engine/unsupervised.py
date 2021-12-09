@@ -4,9 +4,9 @@ import numpy as np
 import torch
 
 from simsiam.models import get_encoder, get_predictor
-from simsiam.optimizer import get_optimizers, get_schedulers
 from simsiam.loss import symmetric_cos_dist
 from simsiam.metrics import Metrics
+from simsiam.optimizer import get_optimizers, get_schedulers
 
 
 class UnsupervisedEngine(pl.LightningModule):
@@ -26,6 +26,9 @@ class UnsupervisedEngine(pl.LightningModule):
         self.epoch_losses = list()
         self.full_eval_every_n = config.evaluation.knn.full_eval_every_n
         self.feature_bank_f, self.feature_bank_z, self.feature_bank_y = list(), list(), list()
+
+        self.predict_step = self.validation_step
+        self.test_step = self.validation_step
 
     @property
     def lr(self):
@@ -52,7 +55,8 @@ class UnsupervisedEngine(pl.LightningModule):
         f1, f2 = self.resnet(x1), self.resnet(x2)
         z1, z2 = self.projector(f1), self.projector(f2)
         p1, p2 = self.predictor(z1), self.predictor(z2)
-        loss = self.loss_func(z1.detach(), z2.detach(), p1, p2)
+        # loss = self.loss_func(z1.detach(), z2.detach(), p1, p2)
+        loss = self.loss_func(z1, z2, p1, p2)
 
         loss.backward()
         opt_enc.step(), opt_pred.step()
@@ -93,33 +97,33 @@ class UnsupervisedEngine(pl.LightningModule):
 
     def calc_acc(self, outputs, data_split):
         f, z, y = map(np.concatenate, zip(*outputs))
-        f, z, y = f, z, y
 
-        if self.full_eval:
-            f_train, z_train = torch.cat(self.feature_bank_f).numpy(), torch.cat(self.feature_bank_z).numpy()
-            y_train = torch.cat(self.feature_bank_y).numpy()
-            self.feature_bank_f, self.feature_bank_z, self.feature_bank_y = list(), list(), list()
-            _metrics = self.metrics.run(f, z, y, f_train, z_train, y_train)
-        else:
-            _metrics = self.metrics.run(f, z, y)
+        if not self.full_eval:
+            return
+        f_train, g_train = torch.cat(self.feature_bank_f).numpy(), torch.cat(self.feature_bank_z).numpy()
+        y_train = torch.cat(self.feature_bank_y).numpy()
+        self.feature_bank_f, self.feature_bank_z, self.feature_bank_y = list(), list(), list()
+        _metrics = self.metrics.run(f, z, y, f_train, g_train, y_train)
+
         metrics = dict()
         for k, v in _metrics.items():
             metrics[f'{data_split}/{k}'] = v
 
         self.logger.experiment.log(metrics, step=self.current_epoch)  # For wandb
-        self.log_dict(metrics, prog_bar=False, on_epoch=True, on_step=False, logger=False, sync_dist=True)  # For callbacks
-
-    def predict_step(self, batch, batch_idx, dataloader_idx=0):
-        return self.validation_step(batch, batch_idx)
+        self.log_dict(metrics, prog_bar=False, on_epoch=True, on_step=False, logger=False,
+                      sync_dist=True)  # For callbacks
 
     def configure_optimizers(self):
-        optimizers = get_optimizers(self.config.training.optimizer, self.resnet, self.projector, self.predictor)
         training_config = self.config.training
+        optimizers = get_optimizers(training_config.optimizer, self.resnet, self.projector, self.predictor)
         if training_config.scheduler is not None and \
                 not (training_config.scheduler.encoder is None and training_config.scheduler.predictor is None):
             schedulers = get_schedulers(training_config, optimizers)
             return optimizers, schedulers
         else:
             return optimizers
+
+
+
 
 
