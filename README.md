@@ -46,8 +46,8 @@ To build the Image go to the [Docker](https://github.com/tillaczel/simsiam/tree/
 docker build -t simsiam .
 ```
 
-### Starting a training
-Please replace `${PATH_TO_REPO}` and run
+### Starting a run
+Please replace `${PATH_TO_REPO}` and run:
 ```
 docker run --rm -it --name='training' -v ${PATH_TO_REPO}:/simsiam --shm-size=4g --gpus all simsiam
 ```
