@@ -21,17 +21,15 @@ def get_datasets(dataset, data_dir, val_split, train_split_ratio):
     return _train_set, _valid_set
 
 
-def get_dataloaders(train_set, valid_set, test_set, train_set_predict, batch_size, num_workers):
+def get_dataloaders(train_set, valid_set, train_set_predict, batch_size, num_workers):
     train_dataloader = DataLoader(train_set, batch_size=batch_size, num_workers=num_workers,
                                   drop_last=True, shuffle=True, persistent_workers=True)
     val_dataloader = DataLoader(valid_set, batch_size=batch_size, num_workers=num_workers,
                                 drop_last=False, shuffle=False, persistent_workers=True)
-    test_dataloader = DataLoader(test_set, batch_size=batch_size, num_workers=num_workers,
-                                 drop_last=False, shuffle=False, persistent_workers=True)
     train_predict_dataloader = DataLoader(train_set_predict, batch_size=batch_size,
                                           num_workers=num_workers,  drop_last=False, shuffle=False,
                                           persistent_workers=False)
-    return train_dataloader, val_dataloader, test_dataloader, train_predict_dataloader
+    return train_dataloader, val_dataloader, train_predict_dataloader
 
 
 def get_unsupervised_dataloaders(config: DictConfig, data_dir: str, normalize_bool=True):
