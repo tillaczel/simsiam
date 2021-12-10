@@ -11,7 +11,6 @@ from simsiam.api import train_supervised, evaluate
 def main(config: DictConfig):
     config = OmegaConf.structured(config)
     results = train_supervised(config)
-    print(evaluate(results, config))
 
 
 if __name__ == '__main__':
