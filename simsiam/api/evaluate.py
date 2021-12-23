@@ -35,7 +35,7 @@ def evaluate(results, config: DictConfig):
                               config.evaluation.linear.max_epochs, subset=subset)
         trainer = pl.Trainer(max_epochs=config.evaluation.linear.max_epochs,
                              deterministic=True,
-                             terminate_on_nan=True,
+                             detect_anomaly=True,
                              num_sanity_val_steps=0,
                              gpus=config.experiment.gpu,
                              check_val_every_n_epoch=10
