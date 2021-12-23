@@ -21,7 +21,7 @@ training:
     weight_decay: 0.0005
   scheduler:
     name: 'cosine'
-    max_epochs: 1000
+    max_epochs: 800
   ckpt_callback:
     save_top_k: 1
     monitor:
