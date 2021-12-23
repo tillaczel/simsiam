@@ -22,7 +22,7 @@ model:
     out_bn: False
 
 training:
-  max_epochs: 200
+  max_epochs: 1000
   optimizer:
     encoder:
       name: 'sgd'
@@ -37,7 +37,7 @@ training:
   scheduler:
     encoder:
       name: 'cosine'
-      max_epochs: 200
+      max_epochs: 1000
     predictor:
   ckpt_callback:
     save_top_k: 1

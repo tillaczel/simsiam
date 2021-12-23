@@ -58,7 +58,7 @@ class SupervisedEngine(pl.LightningModule):
         acc = dict()
         _acc = get_accuracy(y_hat, y, (1, 3, 5))
         for k, v in _acc.items():
-            acc[f'{data_split}/{self.config.dataset.subset}_supervised_{k}'] = v
+            acc[f'{data_split}/supervised_{k}'] = v
         self.logger.experiment.log(acc, step=self.current_epoch)  # For wandb
         self.log_dict(acc, prog_bar=False, on_epoch=True, on_step=False, logger=False,
                       sync_dist=True)  # For callbacks

@@ -8,12 +8,12 @@ dataset:
   batch_size: 512
   train_split_ratio: 0.8
   num_workers: 8
-  val_split: True
+  val_split: False
   n_classes: 10
   subset: 100
 
 training:
-  max_epochs: 200
+  max_epochs: 800
   optimizer:
     name: 'sgd'
     lr: 0.06
@@ -21,7 +21,7 @@ training:
     weight_decay: 0.0005
   scheduler:
     name: 'cosine'
-    max_epochs: 200
+    max_epochs: 1000
   ckpt_callback:
     save_top_k: 1
     monitor:
