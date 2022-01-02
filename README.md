@@ -60,14 +60,3 @@ For changing the hyper-parameters either use arguments:
 python3 experiments/scripts/unsupervised/run.py training.max_epochs=200
 ```
 or change the [config.yaml](https://github.com/tillaczel/simsiam/tree/main/experiments/scripts/unsupervised/config.yaml) file.
-
-### Starting visualization notebooks
-Some notebooks are included to visualize the results. You need to replace the wandb paths to your models.
-```
-docker run --rm -it --name='notebook' -p:8886:8886 -v ${PATH_TO_REPO}:/simsiam --shm-size=4g --gpus all simsiam
-jupyter notebook --ip 0.0.0.0 --port 8886 --no-browser --allow-root
-```
-Go to browser and type:
-```
-localhost:8886
-```
